@@ -3,29 +3,52 @@ import pandas as pd
 import numpy as np
 import joblib
 
+st.set_page_config(page_title="Airbnb Pricing Engine", layout="wide")
+
 model = joblib.load("airbnb_pricing_model.pkl")
 model_columns = joblib.load("model_columns.pkl")
 
 st.title("Airbnb Dynamic Pricing Engine")
+st.markdown("Optimize listing prices using machine learning")
 
-st.write("Enter listing details to predict price")
+st.markdown("---")
 
-construction_year = st.number_input("Construction Year", 1900, 2025, 2015)
-minimum_nights = st.number_input("Minimum Nights", 1, 30, 2)
-number_of_reviews = st.number_input("Number of Reviews", 0, 1000, 50)
-reviews_per_month = st.number_input("Reviews per Month", 0.0, 20.0, 3.0)
-review_rate_number = st.number_input("Review Rating", 0.0, 5.0, 4.5)
-host_listings = st.number_input("Host Listing Count", 1, 20, 1)
-availability = st.slider("Availability (days)", 0, 365, 150)
-service_fee = st.number_input("Service Fee", 0.0, 500.0, 20.0)
+col1, col2 = st.columns(2)
 
-borough = st.selectbox("Borough", ["Bronx", "Brooklyn", "Manhattan", "Queens", "Staten Island"])
-room_type = st.selectbox("Room Type", ["Entire home/apt", "Private room", "Shared room", "Hotel room"])
-cancellation = st.selectbox("Cancellation Policy", ["flexible", "moderate", "strict"])
-instant = st.selectbox("Instant Bookable", ["True", "False"])
-verified = st.selectbox("Host Verified", ["verified", "unconfirmed"])
+with col1:
+    st.subheader("Property Details")
+    construction_year = st.number_input("Construction Year", 1900, 2025, 2015)
+    minimum_nights = st.number_input("Minimum Nights", 1, 30, 2)
+    availability = st.slider("Availability (days per year)", 0, 365, 150)
+    service_fee = st.number_input("Service Fee", 0.0, 500.0, 20.0)
 
-if st.button("Predict Price"):
+with col2:
+    st.subheader("Host & Performance Metrics")
+    number_of_reviews = st.number_input("Number of Reviews", 0, 1000, 50)
+    reviews_per_month = st.number_input("Reviews per Month", 0.0, 20.0, 3.0)
+    review_rate_number = st.number_input("Review Rating", 0.0, 5.0, 4.5)
+    host_listings = st.number_input("Host Listing Count", 1, 20, 1)
+
+st.markdown("---")
+
+col3, col4 = st.columns(2)
+
+with col3:
+    borough = st.selectbox("Borough", ["Bronx", "Brooklyn", "Manhattan", "Queens", "Staten Island"])
+    room_type = st.selectbox("Room Type", ["Entire home/apt", "Private room", "Shared room", "Hotel room"])
+
+with col4:
+    cancellation = st.selectbox("Cancellation Policy", ["flexible", "moderate", "strict"])
+    instant = st.selectbox("Instant Bookable", ["True", "False"])
+    verified = st.selectbox("Host Verified", ["verified", "unconfirmed"])
+
+st.markdown("---")
+
+occupancy = st.slider("Estimated Occupied Nights Per Year", 0, 365, 200)
+
+st.markdown("")
+
+if st.button("Predict Optimal Price"):
 
     input_data = {
         "Construction year": construction_year,
@@ -59,14 +82,25 @@ if st.button("Predict Price"):
     input_df = input_df[model_columns]
 
     predicted_log_price = model.predict(input_df)
-    predicted_price = np.expm1(predicted_log_price)
+    predicted_price = np.expm1(predicted_log_price)[0]
 
-    st.success(f"Recommended Price: ${round(predicted_price[0], 2)}")
+    estimated_revenue = predicted_price * occupancy
 
-    st.markdown("### Revenue Simulation")
+    st.markdown("---")
 
-    occupancy = st.slider("Estimated Occupied Nights Per Year", 0, 365, 200)
+    result_col1, result_col2 = st.columns(2)
 
-    estimated_revenue = predicted_price[0] * occupancy
+    with result_col1:
+        st.metric(
+            label="Recommended Nightly Price",
+            value=f"${round(predicted_price, 2)}"
+        )
 
-    st.info(f"Estimated Annual Revenue: ${round(estimated_revenue, 2)}")
+    with result_col2:
+        st.metric(
+            label="Estimated Annual Revenue",
+            value=f"${round(estimated_revenue, 2)}"
+        )
+
+    st.markdown("")
+    st.success("Pricing recommendation generated successfully.")
