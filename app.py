@@ -11,7 +11,7 @@ model_columns = joblib.load("model_columns.pkl")
 st.title("Airbnb Dynamic Pricing Engine")
 st.markdown("Optimize listing prices using machine learning")
 
-st.caption("Developed by Ashritha Anandal | Data Analytics Internship Project")
+st.caption("Developed by Ashritha Anandal | Data Analyst Internship Project")
 
 st.markdown("---")
 
@@ -106,5 +106,6 @@ if st.button("Predict Optimal Price"):
 
     st.markdown("")
     st.success("Pricing recommendation generated successfully.")
+
 
 
